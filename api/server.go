@@ -17,5 +17,11 @@ func Server() {
 	http.HandleFunc("/department/delete", DepartmentDelete)
 	http.HandleFunc("/department/readAll", DepartmentReadAll)
 
+	http.HandleFunc("/parcel/create", ParcelCreate)
+	http.HandleFunc("/parcel/read", ParcelRead)
+	http.HandleFunc("/parcel/update", ParcelUpdate)
+	http.HandleFunc("/parcel/delete", ParcelDelete)
+	http.HandleFunc("/parcel/readAll", ParcelReadAll)
+
 	http.ListenAndServe(":8080", nil)
 }
