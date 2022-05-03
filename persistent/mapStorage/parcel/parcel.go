@@ -1,6 +1,7 @@
 package parcel
 
 import (
+	"fmt"
 	"newMail/models"
 	"sync"
 )
@@ -38,6 +39,10 @@ func Create(parcel models.Parcel) (models.Parcel, error) {
 
 func Read(id uint64) (models.Parcel, error) {
 	parcels.Lock()
+	value, ok := parcels.data[id]
+	if !ok {
+		return value, fmt.Errorf("id does not exist")
+	}
 	result := parcels.data[id]
 	parcels.Unlock()
 	return result, nil
