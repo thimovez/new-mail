@@ -1,6 +1,7 @@
 package department
 
 import (
+	"fmt"
 	"newMail/models"
 	"sync"
 )
@@ -38,6 +39,10 @@ func Create(department models.PostOffice) (models.PostOffice, error) {
 
 func Read(id uint64) (models.PostOffice, error) {
 	departments.Lock()
+	value, ok := departments.data[id]
+	if !ok {
+		return value, fmt.Errorf("id does not exist")
+	}
 	result := departments.data[id]
 	departments.Unlock()
 	return result, nil
