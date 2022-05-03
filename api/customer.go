@@ -9,7 +9,7 @@ import (
 )
 
 func CustomerCreate(w http.ResponseWriter, r *http.Request) {
-	customer, err := readCustomerWithoutID(r)
+	customer, err := readCustomer(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "API error: %s", err)
@@ -44,21 +44,13 @@ func CustomerRead(w http.ResponseWriter, r *http.Request) {
 }
 
 func CustomerUpdate(w http.ResponseWriter, r *http.Request) {
-	id, err := readIDFromForm(r)
+	customer, err := readCustomer(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "API error: %s", err)
 		return
 	}
 
-	customer, err := readCustomerWithoutID(r)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "API error: %s", err)
-		return
-	}
-
-	customer.ID = id
 	newCustomer, err := repo.Update(customer)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -85,7 +77,7 @@ func CustomerDelete(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "All is work")
 }
 
-func CustomerReadAll(w http.ResponseWriter, r *http.Request) {
+func CustomerReadAll(w http.ResponseWriter, _ *http.Request) {
 	result, err := repo.ReadAll() // add limit and offset
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -96,32 +88,25 @@ func CustomerReadAll(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "All is work %+v", result)
 }
 
-func readCustomerWithoutID(r *http.Request) (customer models.Customer, err error) {
+func readCustomer(r *http.Request) (customer models.Customer, err error) {
 	err = r.ParseForm()
 	if err != nil {
 		return
 	}
 
+	if !r.Form.Has("id") {
+		return customer, fmt.Errorf("id is required")
+	}
 	if !r.Form.Has("name") {
 		return customer, fmt.Errorf("name is required")
 	}
-
 	if !r.Form.Has("surname") {
 		return customer, fmt.Errorf("surname is required")
 	}
 
-	if !r.Form.Has("phone") {
-		return customer, fmt.Errorf("phone is required")
-	}
-
-	phone, err := strconv.Atoi(r.Form.Get("phone"))
-	if err != nil {
-		return
-	}
-
+	id, err := strconv.ParseUint(r.Form.Get("id"), 10, 64)
+	customer.ID = id
 	customer.Name = r.Form.Get("name")
 	customer.SurName = r.Form.Get("surname")
-	customer.Phone = phone
-
 	return
 }

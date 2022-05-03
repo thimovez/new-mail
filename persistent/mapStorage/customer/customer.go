@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"fmt"
 	"newMail/models"
 	"sync"
 )
@@ -20,24 +21,29 @@ var customers = storage{
 	data: make(map[uint64]models.Customer),
 }
 
-func newID() uint64 {
-	counter.Lock()
-	counter.id += 1
-	newId := counter.id
-	counter.Unlock()
-	return newId
-}
+//func newID() uint64 {
+//	counter.Lock()
+//	counter.id += 1
+//	newId := counter.id
+//	counter.Unlock()
+//	return newId
+//}
 
-func Create(customer models.Customer) (models.Customer, error) { //проверить декектор гонки данных -race
-	customer.ID = newID()
+func Create(customer models.Customer) (models.Customer, error) {
+	//customer.ID = newID()
+	id := customer.ID
 	counter.Lock()
-	customers.data[customer.ID] = customer
+	customers.data[id] = customer
 	counter.Unlock()
 	return customer, nil
 }
 
 func Read(id uint64) (models.Customer, error) {
 	counter.Lock()
+	value, ok := customers.data[id]
+	if !ok {
+		return value, fmt.Errorf("id does not exist")
+	}
 	result := customers.data[id]
 	counter.Unlock()
 	return result, nil
