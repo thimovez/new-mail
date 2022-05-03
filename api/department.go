@@ -5,22 +5,16 @@ import (
 	"net/http"
 	"newMail/models"
 	repo "newMail/repo/department"
+	"strconv"
 )
 
 func DepartmentCreate(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	department, err := readDepartmentWithoutId(r)
 	if err != nil {
-		return
-	}
-
-	if !r.Form.Has("address") {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "API error: address is required")
+		fmt.Fprintf(w, "API error: %s", err)
 		return
 	}
-
-	var department models.PostOffice
-	department.Address = r.Form.Get("address")
 
 	newDepartment, err := repo.Create(department)
 	if err != nil {
@@ -29,7 +23,7 @@ func DepartmentCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "New Customer : %+v", newDepartment)
+	fmt.Fprintf(w, "New Department : %+v", newDepartment)
 }
 
 func DepartmentRead(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +39,7 @@ func DepartmentRead(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "API error: %s", err)
 		return
 	}
-	fmt.Fprintf(w, "New Customer : %+v", department)
+	fmt.Fprintf(w, "Department : %+v", department)
 }
 
 // DepartmentUpdate - if department change address - use update
@@ -57,20 +51,8 @@ func DepartmentUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = r.ParseForm()
-	if err != nil {
-		return
-	}
-
-	var department models.PostOffice
-	if !r.Form.Has("address") {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "API error: address is required")
-		return
-	}
-
+	department, err := readDepartmentWithoutId(r)
 	department.ID = id
-	department.Address = r.Form.Get("address")
 	newDepartment, err := repo.Update(department)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -95,7 +77,7 @@ func DepartmentDelete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DepartmentReadAll(w http.ResponseWriter, r *http.Request) {
+func DepartmentReadAll(w http.ResponseWriter, _ *http.Request) {
 	department, err := repo.ReadAll()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -104,4 +86,28 @@ func DepartmentReadAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "All is work %+v", department)
+}
+
+func readDepartmentWithoutId(r *http.Request) (department models.PostOffice, err error) {
+	err = r.ParseForm()
+	if err != nil {
+		return
+	}
+
+	if !r.Form.Has("address") {
+		return department, fmt.Errorf("address is required")
+	}
+	if !r.Form.Has("maxVolume") {
+		return department, fmt.Errorf("max volume is required")
+	}
+	if !r.Form.Has("maxWeight") {
+		return department, fmt.Errorf("max weight is required")
+	}
+
+	department.Address = r.Form.Get("address")
+	volume, err := strconv.ParseFloat(r.Form.Get("maxVolume"), 10)
+	department.MaxVolume = volume
+	weight, err := strconv.ParseFloat(r.Form.Get("maxWeight"), 10)
+	department.MaxWeight = weight
+	return
 }
