@@ -87,7 +87,7 @@ func ParcelDelete(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "All is work %+v")
 }
 
-func ParcelReadAll(w http.ResponseWriter, r *http.Request) {
+func ParcelReadAll(w http.ResponseWriter, _ *http.Request) {
 	result, err := repo.ReadAll() // add limit and offset
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -122,16 +122,22 @@ func readParcelWithoutID(r *http.Request) (parcel models.Parcel, err error) {
 	if !r.Form.Has("receiver") {
 		return parcel, fmt.Errorf("receiver is required")
 	}
+	if !r.Form.Has("sourceDep") {
+		return parcel, fmt.Errorf("source department is required")
+	}
+	if !r.Form.Has("destinationDep") {
+		return parcel, fmt.Errorf("destination department is required")
+	}
 
-	weight, err := strconv.Atoi(r.Form.Get("weight"))
+	weight, err := strconv.ParseFloat(r.Form.Get("weight"), 10)
 	if err != nil {
 		return parcel, fmt.Errorf("weight must be number")
 	}
-	volume, err := strconv.Atoi(r.Form.Get("volume"))
+	volume, err := strconv.ParseFloat(r.Form.Get("volume"), 10)
 	if err != nil {
 		return parcel, fmt.Errorf("volume must be number")
 	}
-	price, err := strconv.Atoi(r.Form.Get("price"))
+	price, err := strconv.ParseFloat(r.Form.Get("price"), 10)
 	if err != nil {
 		return parcel, fmt.Errorf("price must be number")
 	}
@@ -143,12 +149,22 @@ func readParcelWithoutID(r *http.Request) (parcel models.Parcel, err error) {
 	if err != nil {
 		return parcel, fmt.Errorf("receiver must be number")
 	}
+	sourceDep, err := strconv.ParseUint(r.Form.Get("sourceDep"), 10, 64)
+	if err != nil {
+		return parcel, fmt.Errorf("sourceDep must be number")
+	}
+	destinationDep, err := strconv.ParseUint(r.Form.Get("destinationDep"), 10, 64)
+	if err != nil {
+		return parcel, fmt.Errorf("destinationDep must be number")
+	}
 
 	parcel.Name = r.Form.Get("name")
-	parcel.Weight = float64(weight) //уточнить подходит ли такая запись конвертации
-	parcel.Volume = float64(volume)
-	parcel.Price = float64(price)
-	parcel.Sender = sender
-	parcel.Receiver = receiver
+	parcel.Weight = weight
+	parcel.Volume = volume
+	parcel.Price = price
+	parcel.SenderID = sender
+	parcel.ReceiverID = receiver
+	parcel.SourceDepartmentID = sourceDep
+	parcel.DestinationDepartmentID = destinationDep
 	return parcel, nil
 }
